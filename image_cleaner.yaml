@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: image-cleaner-secret
+data:
+  username: bmlnYXNhMTI=
+  personal_access_token: WXczMTAyMDUh
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: imagecleaner
+spec:
+  schedule: "36 * * * *" ## every 2 months
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: imagecleaner
+            env:
+            - name: username
+              valueFrom:
+                secretKeyRef:
+                  name: image-cleaner-secret
+                  key: username
+            - name: personal_access_token
+              valueFrom:
+                secretKeyRef:
+                  name: image-cleaner-secret
+                  key: personal_access_token
+            image: python:3.8
+            imagePullPolicy: IfNotPresent
+            command: ["python"]
+            args: ["./src/image_cleaner.py"]
+            volumeMounts:
+            - mountPath: /src
+              name: src
+          restartPolicy: OnFailure
+          volumes:
+          - name: src
+            configMap:
+              name: image-cleaner-src
