@@ -18,7 +18,7 @@ metadata:
   name: image-cleaner-secret
 data:
   username: <username>
-  personal_access_token: <personal_access_token>
+  password: <password>
 ```
 
 ### 3. create configmap
