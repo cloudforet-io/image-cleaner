@@ -1,6 +1,7 @@
 ##################################
 # cloudwatch
 ##################################
+
 resource "aws_cloudwatch_event_rule" "this" {
   name        = "image_clean_schedule"
   description = "image clean schedule"
@@ -31,15 +32,8 @@ resource "aws_lambda_function" "this" {
   handler       = "image_cleaner.lambda_handler"
 
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
-
-  runtime = "python3.8"
-
-  environment {
-    variables = {
-      username              = "foo"
-      personal_access_token = "bar"
-    }
-  }
+  runtime          = "python3.8"
+  timeout          = "60"
 }
 
 resource "aws_lambda_permission" "allow_cloudwatch" {
@@ -60,7 +54,7 @@ resource "aws_cloudwatch_log_group" "this" {
 ##################################
 
 resource "aws_iam_role" "this" {
-  name = "role_image_cleaner_lambda"
+  name = "image_cleaner_lambda_role"
 
   assume_role_policy = <<EOF
 {
@@ -79,10 +73,10 @@ resource "aws_iam_role" "this" {
 EOF
 }
 
-resource "aws_iam_policy" "this" {
-  name        = "policy_image_cleaner_lambda"
+resource "aws_iam_policy" "logging" {
+  name        = "image_cleaner_lambda_logging_policy"
   path        = "/"
-  description = "IAM policy for image cleaner lambda"
+  description = "IAM policy for image cleaner lambda logging"
 
   policy = <<EOF
 {
@@ -102,7 +96,33 @@ resource "aws_iam_policy" "this" {
 EOF
 }
 
-resource "aws_iam_role_policy_attachment" "this" {
+resource "aws_iam_role_policy_attachment" "logging" {
   role       = aws_iam_role.this.name
-  policy_arn = aws_iam_policy.this.arn
+  policy_arn = aws_iam_policy.logging.arn
+}
+
+resource "aws_iam_policy" "ssm" {
+  name        = "image_cleaner_lambda_ssm_policy"
+  path        = "/"
+  description = "IAM policy for image cleaner lambda ssm"
+
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "ssm:GetParameters"
+      ],
+      "Resource": "arn:aws:ssm:*:*:parameter/*",
+      "Effect": "Allow"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "ssm" {
+  role       = aws_iam_role.this.name
+  policy_arn = aws_iam_policy.ssm.arn
 }
