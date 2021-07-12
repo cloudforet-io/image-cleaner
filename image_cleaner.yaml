@@ -3,15 +3,15 @@ kind: Secret
 metadata:
   name: image-cleaner-secret
 data:
-  username: bmlnYXNhMTI=
-  personal_access_token: WXczMTAyMDUh
+  username: <username>
+  personal_access_token: <personal_access_token>
 ---
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
   name: imagecleaner
 spec:
-  schedule: "36 * * * *" ## every 2 months
+  schedule: "0 0 * */2 *" ## every 2 months
   jobTemplate:
     spec:
       template:
