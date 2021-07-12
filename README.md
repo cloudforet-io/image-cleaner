@@ -21,12 +21,12 @@ data:
   personal_access_token: <personal_access_token>
 ```
 
-### 1. create configmap
+### 3. create configmap
 ```
 kubectl create configmap image-cleaner-src --from-file=./src/
 ```
 
-### 2. create secret & cronjob
+### 4. create secret & cronjob
 ```
 kubectl create -f image_cleaner.yaml
 ```
