@@ -1,32 +1,30 @@
 from datetime import datetime, timedelta, timezone
-import urllib.request, urllib.parse, urllib.error
 import json
 import os
+import requests
 
 baseurl = "https://hub.docker.com"
 date_two_months_ago = datetime.now(tz=timezone.utc) - timedelta(days=60)
 
-
-def create_authentication_token(username, personal_access_token):
+def create_authentication_token(username, password):
     url = f'{baseurl}/v2/users/login'
     payload = {
         'username': username,
-        'password': personal_access_token
+        'password': password
     }
-    payload = urllib.parse.urlencode(payload).encode('utf-8')
 
-    with urllib.request.urlopen(url, payload) as response:
-        return json.loads(response.read().decode('utf-8'))['token']
+    response = requests.post(url, data=payload).json()
 
+    return response['token']
 
 def get_image_name(token, repository):
     url = f'{baseurl}/v2/repositories/{repository}/?page_size=100'
+    headers = {
+        'Authorization': 'JWT ' + token
+    }
 
-    request = urllib.request.Request(url)
-    request.add_header('Authorization', 'JWT ' + token)
-
-    with urllib.request.urlopen(request) as response:
-        results = json.loads(response.read().decode('utf-8'))['results']
+    response = requests.get(url,headers=headers).json()
+    results = response['results']
 
     image_names = []
     for result in results:
@@ -34,19 +32,18 @@ def get_image_name(token, repository):
 
     return image_names
 
-
 def get_old_tag(token, repository, image):
     url = f'{baseurl}/v2/repositories/{repository}/{image}/tags/?page_size=100'
+    headers = {
+        'Authorization': 'JWT ' + token
+    }
 
-    request = urllib.request.Request(url)
-    request.add_header('Authorization', 'JWT ' + token)
-
-    with urllib.request.urlopen(request) as response:
-        results = json.loads(response.read().decode('utf-8'))['results']
+    response = requests.get(url, headers=headers).json()
+    results = response['results']
 
     image_tag_list = []
     for result in results:
-        last_updated_str = result['last_updated']
+        last_updated_str = result['tag_last_pushed']
         last_updated_date = datetime.strptime(last_updated_str, '%Y-%m-%dT%H:%M:%S.%f%z')
         if date_two_months_ago > last_updated_date:
             print(f"old tags : {image}:{result['name']}")
@@ -54,28 +51,24 @@ def get_old_tag(token, repository, image):
 
     return image_tag_list
 
-
 def delete_image(token, repository, image, tag):
     url = f'{baseurl}/v2/repositories/{repository}/{image}/tags/{tag}/'
+    headers = {
+        'Authorization': 'JWT ' + token
+    }
 
-    request = urllib.request.Request(url, method="DELETE")
-    request.add_header('Authorization', 'JWT ' + token)
+    response = requests.delete(url,headers=headers)
 
-    try:
-        response = urllib.request.urlopen(url)
-    except urllib.error.HTTPError as e:
-        print(f'[{image}:{tag}] HTTP Error code : {e.code}')
-    except urllib.error.URLError as e:
-        print(f'[{image}:{tag}] URL Error reason : {e.reason}')
+    if response.status_code == 204:
+        print(f'[{image}:{tag}] Successfully Deleted {response.status_code}')
     else:
-        print(f'[{image}:{tag}] {response.getcode()}')
-
+        print(f'[{image}:{tag}] Something Wrong {response.status_code} {response.reason}')
 
 if __name__ == "__main__":
-    username              = os.environ['username']
-    personal_access_token = os.environ['personal_access_token']
+    username = os.environ['username']
+    password = os.environ['password']
 
-    authentication_token = create_authentication_token(username, personal_access_token)
+    authentication_token = create_authentication_token(username, password)
     image_name_list = get_image_name(authentication_token, username)
 
     old_tags_by_image = {}

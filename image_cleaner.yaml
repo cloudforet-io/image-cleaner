@@ -4,7 +4,7 @@ metadata:
   name: image-cleaner-secret
 data:
   username: <username>
-  personal_access_token: <personal_access_token>
+  password: <password>
 ---
 apiVersion: batch/v1beta1
 kind: CronJob
@@ -24,15 +24,15 @@ spec:
                 secretKeyRef:
                   name: image-cleaner-secret
                   key: username
-            - name: personal_access_token
+            - name: password
               valueFrom:
                 secretKeyRef:
                   name: image-cleaner-secret
-                  key: personal_access_token
+                  key: password
             image: python:3.8
             imagePullPolicy: IfNotPresent
-            command: ["python"]
-            args: ["./src/image_cleaner.py"]
+            command: ["/bin/bash", "-c"]
+            args: ["pip install requests && python ./src/image_cleaner.py"]
             volumeMounts:
             - mountPath: /src
               name: src

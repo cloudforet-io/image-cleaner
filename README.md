@@ -8,7 +8,7 @@ Periodically Delete old images in docker hub (Every 2 months)
 ### 1. Encoding secret infomation
 ```
 echo -n <username> | base64 
-echo -n <personal_access_token> | base64
+echo -n <password> | base64
 ```
 ### 2. Edit secret data
 ```
