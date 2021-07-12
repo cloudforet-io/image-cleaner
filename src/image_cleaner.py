@@ -7,41 +7,25 @@ import boto3
 baseurl = "https://hub.docker.com"
 date_two_months_ago = datetime.now(tz=timezone.utc) - timedelta(days=60)
 
-def lambda_handler(event, context):
-    username              = os.environ['username']
-    personal_access_token = os.environ['personal_access_token']
+def get_login_info_from_ssm():
+    client = boto3.client('ssm')
 
-    authentication_token = create_authentication_token(username, personal_access_token)
-    image_name_list = get_image_name(authentication_token, username)
-
-    old_tags_by_image = {}
-    for image_name in image_name_list:
-        old_tags_by_image[image_name] = get_old_tag(authentication_token, username, image_name)
-
-    for image_name in old_tags_by_image:
-        for tag in old_tags_by_image[image_name]:
-            print(f'delete_image({authentication_token}, {username}, {image_name}, {tag})')
-
-
-# def get_login_info_from_ssm():
-#     client = boto3.client('ssm')
-
-#     response = client.get_parameters(
-#         Names=[
-#             'username',
-#             'personal_access_token'
-#         ],
-#         WithDecryption=False
-#     )
+    response = client.get_parameters(
+        Names=[
+            'image_cleaner_username',
+            'image_cleaner_personal_access_token'
+        ],
+        WithDecryption=False
+    )
     
-#     for index in response['Parameters']:
-#         if index['Name'] == 'username':
-#             username = index['Value']
+    for index in response['Parameters']:
+        if index['Name'] == 'image_cleaner_username':
+            username = index['Value']
 
-#         if index['Name'] == 'personal_access_token':
-#             personal_access_token = index['Value']
+        if index['Name'] == 'image_cleaner_personal_access_token':
+            personal_access_token = index['Value']
 
-#     return username, personal_access_token
+    return username, personal_access_token
 
 
 def create_authentication_token(username, personal_access_token):
@@ -106,3 +90,20 @@ def delete_image(token, repository, image, tag):
         print(f'[{image}:{tag}] URL Error reason : {e.reason}')
     else:
         print(f'[{image}:{tag}] {response.getcode()}')
+
+def lambda_handler(event, context):
+    username,personal_access_token = get_login_info_from_ssm()
+
+    authentication_token = create_authentication_token(username, personal_access_token)
+    image_name_list = get_image_name(authentication_token, username)
+
+    old_tags_by_image = {}
+    for image_name in image_name_list:
+        old_tags_by_image[image_name] = get_old_tag(authentication_token, username, image_name)
+
+    for image_name in old_tags_by_image:
+        if old_tags_by_image[image_name]:
+            for tag in old_tags_by_image[image_name]:
+                print(f'delete_image({authentication_token}, {username}, {image_name}, {tag})')
+        else:
+            print(f'[{image_name}] has nothing to delete.')
