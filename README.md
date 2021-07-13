@@ -12,7 +12,7 @@ Periodically Delete old images in docker hub (Every day)
 echo -n <username> | base64 
 echo -n <password> | base64
 ```
-### 2. Edit secret data
+### 2. Edit image_cleaner_secret.yaml
 ```
 apiVersion: v1
 kind: Secret
@@ -23,12 +23,31 @@ data:
   password: <password> <- here
 ```
 
-### 3. create configmap
+### 3. create configmap & secret & cronjob
+- configmap
 ```
 kubectl create configmap image-cleaner-conf --from-file=./conf/
 ```
-
-### 4. create secret & cronjob
+- secret
 ```
-kubectl create -f image_cleaner.yaml
+kubectl create -f image_cleaner_secret.yaml
+```
+- cronjob
+```
+kubectl create -f image_cleaner_cronjob.yaml
+```
+
+## Update API Objects
+To Update object, You can use the command below.
+- configmap
+```
+kubectl create configmap image-cleaner-conf --from-file=./conf/ -o yaml --dry-run=client | kubectl replace -f -
+```
+- secret
+```
+kubectl replace -f image_cleaner_secret.yaml
+```
+- cronjob
+```
+kubectl replace -f image_cleaner_cronjob.yaml
 ```
