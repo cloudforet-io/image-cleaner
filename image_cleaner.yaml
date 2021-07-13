@@ -11,7 +11,7 @@ kind: CronJob
 metadata:
   name: imagecleaner
 spec:
-  schedule: "0 0 * */2 *" ## every 2 months
+  schedule: "0 0 * * *" ## every day 0:00
   jobTemplate:
     spec:
       template:
@@ -29,15 +29,13 @@ spec:
                 secretKeyRef:
                   name: image-cleaner-secret
                   key: password
-            image: python:3.8
+            image: <repository>/image-cleaner:0.1
             imagePullPolicy: IfNotPresent
-            command: ["/bin/bash", "-c"]
-            args: ["pip install requests && python ./src/image_cleaner.py"]
             volumeMounts:
-            - mountPath: /src
-              name: src
+            - mountPath: /usr/src/conf
+              name: conf
           restartPolicy: OnFailure
           volumes:
-          - name: src
+          - name: conf
             configMap:
-              name: image-cleaner-src
+              name: image-cleaner-conf
