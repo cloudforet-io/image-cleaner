@@ -1,53 +1,66 @@
 from datetime import datetime, timedelta, timezone
-import urllib.request, urllib.parse, urllib.error
-import json
+from configparser import ConfigParser
 import os
-import boto3
+import requests
+import sys
+import json
 
-baseurl = "https://hub.docker.com"
-date_two_months_ago = datetime.now(tz=timezone.utc) - timedelta(days=60)
+config = ConfigParser()
+config.read('./conf/config.ini')
 
-def get_login_info_from_ssm():
-    client = boto3.client('ssm')
+BASE_URL = config['COMMON']['base_url']
+DATE_TWO_MONTHS_AGO = datetime.now(tz=timezone.utc) - timedelta(days=60)
 
-    response = client.get_parameters(
-        Names=[
-            'image_cleaner_username',
-            'image_cleaner_personal_access_token'
-        ],
-        WithDecryption=False
-    )
-    
-    for index in response['Parameters']:
-        if index['Name'] == 'image_cleaner_username':
-            username = index['Value']
+def get_login_info():
+    username = os.environ.get('username')
+    password = os.environ.get('password')
 
-        if index['Name'] == 'image_cleaner_personal_access_token':
-            personal_access_token = index['Value']
+    if username is None or password is None:
+        print('Key Error : username or password does not exist in os.env')
+        sys.exit(1)
 
-    return username, personal_access_token
+    return username,password
 
-
-def create_authentication_token(username, personal_access_token):
-    url = f'{baseurl}/v2/users/login'
+def create_authentication_token(username, password):
+    url = f'{BASE_URL}/v2/users/login'
     payload = {
         'username': username,
-        'password': personal_access_token
+        'password': password
     }
-    payload = urllib.parse.urlencode(payload).encode('utf-8')
 
-    with urllib.request.urlopen(url, payload) as response:
-        return json.loads(response.read().decode('utf-8'))['token']
+    try:
+        response = requests.post(url, data=payload).json()
+    except requests.exceptions.ConnectionError as e:
+        print(f'Connection Error {e.response}')
+    except requests.exceptions.HTTPError as e:
+        print(f'HTTP Error {e.response}')
+    except json.JSONDecodeError as e:
+        print(f'Json Decode Error {e}')
 
+    if response.get('token'):
+        return response['token']
+    else:
+        raise Exception(f'response message : {response}')
 
 def get_image_name(token, repository):
-    url = f'{baseurl}/v2/repositories/{repository}/?page_size=100'
+    url = f'{BASE_URL}/v2/repositories/{repository}/?page_size=100'
+    headers = {
+        'Authorization': 'JWT ' + token
+    }
 
-    request = urllib.request.Request(url)
-    request.add_header('Authorization', 'JWT ' + token)
+    try:
+        response = requests.get(url,headers=headers).json()
+    except requests.exceptions.ConnectionError as e:
+        print(f'Connection Error {e.response}')
+    except requests.exceptions.HTTPError as e:
+        print(f'HTTP Error {e.response}')
+    except json.JSONDecodeError as e:
+        print(f'Json Decode Error {e}')
 
-    with urllib.request.urlopen(request) as response:
-        results = json.loads(response.read().decode('utf-8'))['results']
+    if response.get('results'):
+        results = response['results']
+    else:
+        raise Exception(f'response message : {response}')
 
     image_names = []
     for result in results:
@@ -55,55 +68,68 @@ def get_image_name(token, repository):
 
     return image_names
 
-
 def get_old_tag(token, repository, image):
-    url = f'{baseurl}/v2/repositories/{repository}/{image}/tags/?page_size=100'
-
-    request = urllib.request.Request(url)
-    request.add_header('Authorization', 'JWT ' + token)
-
-    with urllib.request.urlopen(request) as response:
-        results = json.loads(response.read().decode('utf-8'))['results']
-
-    image_tag_list = []
-    for result in results:
-        last_updated_str = result['last_updated']
-        last_updated_date = datetime.strptime(last_updated_str, '%Y-%m-%dT%H:%M:%S.%f%z')
-        if date_two_months_ago > last_updated_date:
-            print(f"old tags : {image}:{result['name']}")
-            image_tag_list.append(result['name'])
-
-    return image_tag_list
-
-
-def delete_image(token, repository, image, tag):
-    url = f'{baseurl}/v2/repositories/{repository}/{image}/tags/{tag}/'
-
-    request = urllib.request.Request(url, method="DELETE")
-    request.add_header('Authorization', 'JWT ' + token)
+    #TODO: Page Sequential Search
+    url = f'{BASE_URL}/v2/repositories/{repository}/{image}/tags/?page_size=200'
+    headers = {
+        'Authorization': 'JWT ' + token
+    }
 
     try:
-        response = urllib.request.urlopen(url)
-    except urllib.error.HTTPError as e:
-        print(f'[{image}:{tag}] HTTP Error code : {e.code}')
-    except urllib.error.URLError as e:
-        print(f'[{image}:{tag}] URL Error reason : {e.reason}')
+        response = requests.get(url, headers=headers).json()
+    except requests.exceptions.ConnectionError as e:
+        print(f'Connection Error {e.response}')
+    except requests.exceptions.HTTPError as e:
+        print(f'HTTP Error {e.response}')
+    except json.JSONDecodeError as e:
+        print(f'Json Decode Error {e}')
+
+    if response.get('results'):
+        results = response['results']
     else:
-        print(f'[{image}:{tag}] {response.getcode()}')
+        raise Exception(f'response message : {response}')
 
-def lambda_handler(event, context):
-    username,personal_access_token = get_login_info_from_ssm()
+    image_tags = []
+    for result in results:
+        last_updated_str = result['tag_last_pushed']
+        last_updated = datetime.strptime(last_updated_str, '%Y-%m-%dT%H:%M:%S.%f%z')
+        if DATE_TWO_MONTHS_AGO > last_updated:
+            print(f"old tags : {image}:{result['name']}")
+            image_tags.append(result['name'])
 
-    authentication_token = create_authentication_token(username, personal_access_token)
-    image_name_list = get_image_name(authentication_token, username)
+    return image_tags
+
+def delete_image(token, repository, image, tag):
+    url = f'{BASE_URL}/v2/repositories/{repository}/{image}/tags/{tag}/'
+    headers = {
+        'Authorization': 'JWT ' + token
+    }
+
+    try:
+        response = requests.delete(url,headers=headers)
+    except requests.exceptions.ConnectionError as e:
+        print(f'Connection Error {e.response}')
+    except requests.exceptions.HTTPError as e:
+        print(f'HTTP Error {e.response}')
+
+    if response.status_code == 204:
+        print(f'[{image}:{tag}] Successfully Deleted {response.status_code}')
+    else:
+        print(f'[{image}:{tag}] Something Wrong {response.status_code} {response.reason}')
+
+if __name__ == "__main__":
+    username, password = get_login_info()
+
+    authentication_token = create_authentication_token(username, password)
+    image_names = get_image_name(authentication_token, username)
 
     old_tags_by_image = {}
-    for image_name in image_name_list:
+    for image_name in image_names:
         old_tags_by_image[image_name] = get_old_tag(authentication_token, username, image_name)
 
     for image_name in old_tags_by_image:
         if old_tags_by_image[image_name]:
             for tag in old_tags_by_image[image_name]:
-                print(f'delete_image({authentication_token}, {username}, {image_name}, {tag})')
+                delete_image(authentication_token,username,image_name,tag)
         else:
             print(f'[{image_name}] has nothing to delete.')

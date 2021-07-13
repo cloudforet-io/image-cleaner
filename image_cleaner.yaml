@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: image-cleaner-secret
+data:
+  username: <username>
+  password: <password>
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: imagecleaner
+spec:
+  schedule: "0 0 * * *" ## every day 0:00
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: imagecleaner
+            env:
+            - name: username
+              valueFrom:
+                secretKeyRef:
+                  name: image-cleaner-secret
+                  key: username
+            - name: password
+              valueFrom:
+                secretKeyRef:
+                  name: image-cleaner-secret
+                  key: password
+            image: <repository>/image-cleaner:0.1
+            imagePullPolicy: IfNotPresent
+            volumeMounts:
+            - mountPath: /usr/src/conf
+              name: conf
+          restartPolicy: OnFailure
+          volumes:
+          - name: conf
+            configMap:
+              name: image-cleaner-conf
