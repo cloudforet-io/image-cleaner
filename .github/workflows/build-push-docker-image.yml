@@ -3,9 +3,7 @@ name: build-push-docker-image
 on:
   push:
     tags:
-      - v*
-    branches-ignore:
-      - '*'
+      - 'v*'
 
 jobs:
   build_and_deploy:
