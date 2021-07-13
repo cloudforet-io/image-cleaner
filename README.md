@@ -1,9 +1,9 @@
 # image-cleaner
 Periodically Delete old images in docker hub (Every 2 months)
 
-## How to create CronJob
+<img width="1354" alt="스크린샷 2021-07-13 오전 10 57 14" src="https://user-images.githubusercontent.com/19552819/125378147-3611cd00-e3c9-11eb-88dc-8d2818d3a297.png">
 
-[Docker hub: Managing access tokens](https://docs.docker.com/docker-hub/access-tokens/)
+## How to create CronJob
 
 ### 1. Encoding secret infomation
 ```

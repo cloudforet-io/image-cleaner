@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta, timezone
-import json
 import os
 import requests
 
@@ -14,8 +13,10 @@ def create_authentication_token(username, password):
     }
 
     response = requests.post(url, data=payload).json()
-
-    return response['token']
+    if response.get('token'):
+        return response['token']
+    else:
+        raise Exception(f'response message : {response}')
 
 def get_image_name(token, repository):
     url = f'{baseurl}/v2/repositories/{repository}/?page_size=100'
@@ -24,7 +25,10 @@ def get_image_name(token, repository):
     }
 
     response = requests.get(url,headers=headers).json()
-    results = response['results']
+    if response.get('results'):
+        results = response['results']
+    else:
+        raise Exception(f'response message : {response}')
 
     image_names = []
     for result in results:
@@ -39,7 +43,10 @@ def get_old_tag(token, repository, image):
     }
 
     response = requests.get(url, headers=headers).json()
-    results = response['results']
+    if response.get('results'):
+        results = response['results']
+    else:
+        raise Exception(f'response message : {response}')
 
     image_tag_list = []
     for result in results:
