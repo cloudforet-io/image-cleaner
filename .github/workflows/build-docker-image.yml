@@ -17,4 +17,4 @@ jobs:
     - name: Dump GitHub context
       env:
         CURRUNT_TAG_VERSION: ${{ github.event.release.tag_name }}
-      run: echo "$CURRUNT_TAG_VERSION"
+      run: echo $CURRUNT_TAG_VERSION
