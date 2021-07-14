@@ -1,7 +1,7 @@
 # image-cleaner
 Periodically Delete old images in docker hub (Every day)
 
-<img width="1339" alt="스크린샷 2021-07-13 오후 5 48 41" src="https://user-images.githubusercontent.com/19552819/125421659-217dfac2-d056-42ef-bf7a-e61b76a3acd2.png">
+<img width="1337" alt="스크린샷 2021-07-14 오후 9 24 10" src="https://user-images.githubusercontent.com/19552819/125621539-382e58aa-0c16-4c4a-9e49-01a79b651c48.png">
 
 ## How to create CronJob
 
