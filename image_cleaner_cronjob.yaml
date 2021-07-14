@@ -9,7 +9,7 @@ spec:
       template:
         spec:
           imagePullSecrets: 
-          - name: image-cleaner-secret-erc
+          - name: image-cleaner-secret-ecr
           containers:
           - name: imagecleaner
             env:

@@ -3,7 +3,7 @@ KUBECTL='kubectl'
 
 AWS_ACCOUNT_ID='<>'
 AWS_ECR_REPOSITORY_REGION='<>'
-SECRET_NAME='image-cleaner-secret-erc'
+SECRET_NAME='image-cleaner-secret-ecr'
 
 EXISTS=$($KUBECTL get secret "$SECRET_NAME" | tail -n 1 | cut -d ' ' -f 1)
 if [ "$EXISTS" = "$SECRET_NAME" ]; then
