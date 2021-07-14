@@ -23,6 +23,23 @@ data:
   password: <password> <- here
 ```
 
+### 4. Create imagePullSecrets to Login ECR 
+
+- Edit the ecr token generation script in ./helper/credential-ecr.sh
+```
+# KUBECTL='kubectl --dry-run=client'
+KUBECTL='kubectl'
+
+AWS_ACCOUNT_ID='<YOUR AWS ACCOUNT ID>'
+AWS_DEFAULT_REGION='<ECR REPOSITORY REGION>'
+SECRET_NAME='image-cleaner-secret-erc'
+...
+```
+- Run script to Create imagePullSecrets
+```
+sh ./helper/credential-ecr-sh
+```
+
 ### 3. create configmap & secret & cronjob
 - configmap
 ```
@@ -48,6 +65,27 @@ kubectl create configmap image-cleaner-conf --from-file=./conf/ -o yaml --dry-ru
 kubectl replace -f image_cleaner_secret.yaml
 ```
 - cronjob
+```
+kubectl replace -f image_cleaner_cronjob.yaml
+```
+
+## If a new tag of the Docker image is uploaded to the repository
+-  Edit tag of the Docker image in image_cleaner_cronjob.yaml
+```
+...
+              valueFrom:
+                secretKeyRef:
+                  name: image-cleaner-secret
+                  key: password
+            image: image:<New tag>
+            imagePullPolicy: IfNotPresent
+...
+```
+- Recreate imagePullSecrets
+```
+sh ./helper/credential-ecr-sh
+```
+- Update cronjob object
 ```
 kubectl replace -f image_cleaner_cronjob.yaml
 ```

@@ -8,6 +8,8 @@ spec:
     spec:
       template:
         spec:
+          imagePullSecrets: 
+          - name: image-cleaner-secret-erc
           containers:
           - name: imagecleaner
             env:
@@ -21,7 +23,7 @@ spec:
                 secretKeyRef:
                   name: image-cleaner-secret
                   key: password
-            image: <repository>/image-cleaner:0.1
+            image: imgate:tag
             imagePullPolicy: IfNotPresent
             volumeMounts:
             - mountPath: /usr/src/conf
