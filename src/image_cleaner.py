@@ -6,9 +6,13 @@ import sys
 import json
 
 config = ConfigParser()
-config.read('./conf/config.ini')
+try:
+    config.read_file(open('./conf/config.ini'))
+except FileNotFoundError:
+    print('[Error] Config file does not exist')
+    sys.exit(1)
 
-BASE_URL = config['COMMON']['base_url']
+BASE_URL = config.get('COMMON', 'base_url')
 DATE_TWO_MONTHS_AGO = datetime.now(tz=timezone.utc) - timedelta(days=60)
 
 def get_login_info():
@@ -31,11 +35,11 @@ def create_authentication_token(username, password):
     try:
         response = requests.post(url, data=payload).json()
     except requests.exceptions.ConnectionError as e:
-        print(f'Connection Error {e.response}')
+        raise Exception(f'Connection Error {e.response}')
     except requests.exceptions.HTTPError as e:
-        print(f'HTTP Error {e.response}')
+        raise Exception(f'HTTP Error {e.response}')
     except json.JSONDecodeError as e:
-        print(f'Json Decode Error {e}')
+        raise Exception(f'Json Decode Error {e}')
 
     if response.get('token'):
         return response['token']
@@ -51,11 +55,11 @@ def get_image_name(token, repository):
     try:
         response = requests.get(url,headers=headers).json()
     except requests.exceptions.ConnectionError as e:
-        print(f'Connection Error {e.response}')
+        raise Exception(f'Connection Error {e.response}')
     except requests.exceptions.HTTPError as e:
-        print(f'HTTP Error {e.response}')
+        raise Exception(f'HTTP Error {e.response}')
     except json.JSONDecodeError as e:
-        print(f'Json Decode Error {e}')
+        raise Exception(f'Json Decode Error {e}')
 
     if response.get('results'):
         results = response['results']
@@ -78,16 +82,16 @@ def get_old_tag(token, repository, image):
     try:
         response = requests.get(url, headers=headers).json()
     except requests.exceptions.ConnectionError as e:
-        print(f'Connection Error {e.response}')
+        raise Exception(f'Connection Error {e.response}')
     except requests.exceptions.HTTPError as e:
-        print(f'HTTP Error {e.response}')
+        raise Exception(f'HTTP Error {e.response}')
     except json.JSONDecodeError as e:
-        print(f'Json Decode Error {e}')
+        raise Exception(f'Json Decode Error {e}')
 
     if response.get('results'):
         results = response['results']
     else:
-        raise Exception(f'response message : {response}')
+        return []
 
     image_tags = []
     for result in results:
@@ -108,9 +112,9 @@ def delete_image(token, repository, image, tag):
     try:
         response = requests.delete(url,headers=headers)
     except requests.exceptions.ConnectionError as e:
-        print(f'Connection Error {e.response}')
+        raise Exception(f'Connection Error {e.response}')
     except requests.exceptions.HTTPError as e:
-        print(f'HTTP Error {e.response}')
+        raise Exception(f'HTTP Error {e.response}')
 
     if response.status_code == 204:
         print(f'[{image}:{tag}] Successfully Deleted {response.status_code}')
@@ -119,6 +123,7 @@ def delete_image(token, repository, image, tag):
 
 if __name__ == "__main__":
     username, password = get_login_info()
+    repository = config.get('COMMON','repository_name')
 
     authentication_token = create_authentication_token(username, password)
     image_names = get_image_name(authentication_token, username)
