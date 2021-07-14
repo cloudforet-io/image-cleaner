@@ -12,7 +12,7 @@ except FileNotFoundError:
     print('[Error] Config file does not exist')
     sys.exit(1)
 
-BASE_URL = config.get('COMMON', 'base_url')
+BASE_URL = config['COMMON']['base_url']
 DATE_TWO_MONTHS_AGO = datetime.now(tz=timezone.utc) - timedelta(days=60)
 
 def get_login_info():
@@ -123,7 +123,7 @@ def delete_image(token, repository, image, tag):
 
 if __name__ == "__main__":
     username, password = get_login_info()
-    repository = config.get('COMMON','repository_name')
+    repository = config['COMMON']['repository_name']
 
     authentication_token = create_authentication_token(username, password)
     image_names = get_image_name(authentication_token, username)
