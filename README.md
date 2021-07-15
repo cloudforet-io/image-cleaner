@@ -1,7 +1,7 @@
 # image-cleaner
 Periodically Delete old images in docker hub (Every day)
 
-<img width="1339" alt="스크린샷 2021-07-13 오후 5 48 41" src="https://user-images.githubusercontent.com/19552819/125421659-217dfac2-d056-42ef-bf7a-e61b76a3acd2.png">
+<img width="1337" alt="스크린샷 2021-07-14 오후 9 24 10" src="https://user-images.githubusercontent.com/19552819/125621539-382e58aa-0c16-4c4a-9e49-01a79b651c48.png">
 
 ## How to create CronJob
 
@@ -21,6 +21,23 @@ metadata:
 data:
   username: <username> <- here
   password: <password> <- here
+```
+
+### 4. Create imagePullSecrets to Login ECR 
+
+- Edit the ecr token generation script in ./helper/credential-ecr.sh
+```
+# KUBECTL='kubectl --dry-run=client'
+KUBECTL='kubectl'
+
+AWS_ACCOUNT_ID='<YOUR AWS ACCOUNT ID>'
+AWS_DEFAULT_REGION='<ECR REPOSITORY REGION>'
+SECRET_NAME='image-cleaner-secret-erc'
+...
+```
+- Run script to Create imagePullSecrets
+```
+sh ./helper/credential-ecr-sh
 ```
 
 ### 3. create configmap & secret & cronjob
@@ -48,6 +65,27 @@ kubectl create configmap image-cleaner-conf --from-file=./conf/ -o yaml --dry-ru
 kubectl replace -f image_cleaner_secret.yaml
 ```
 - cronjob
+```
+kubectl replace -f image_cleaner_cronjob.yaml
+```
+
+## If a new tag of the Docker image is uploaded to the repository
+-  Edit tag of the Docker image in image_cleaner_cronjob.yaml
+```
+...
+              valueFrom:
+                secretKeyRef:
+                  name: image-cleaner-secret
+                  key: password
+            image: image:<New tag>
+            imagePullPolicy: IfNotPresent
+...
+```
+- Recreate imagePullSecrets
+```
+sh ./helper/credential-ecr-sh
+```
+- Update cronjob object
 ```
 kubectl replace -f image_cleaner_cronjob.yaml
 ```
