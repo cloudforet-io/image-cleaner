@@ -126,15 +126,15 @@ if __name__ == "__main__":
     repository = config['COMMON']['repository_name']
 
     authentication_token = create_authentication_token(username, password)
-    image_names = get_image_name(authentication_token, username)
+    image_names = get_image_name(authentication_token, repository)
 
     old_tags_by_image = {}
     for image_name in image_names:
-        old_tags_by_image[image_name] = get_old_tag(authentication_token, username, image_name)
+        old_tags_by_image[image_name] = get_old_tag(authentication_token, repository, image_name)
 
     for image_name in old_tags_by_image:
         if old_tags_by_image[image_name]:
             for tag in old_tags_by_image[image_name]:
-                delete_image(authentication_token,username,image_name,tag)
+                delete_image(authentication_token,repository,image_name,tag)
         else:
             print(f'[{image_name}] has nothing to delete.')

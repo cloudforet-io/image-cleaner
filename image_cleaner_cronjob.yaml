@@ -23,7 +23,7 @@ spec:
                 secretKeyRef:
                   name: image-cleaner-secret
                   key: password
-            image: imgate:tag
+            image: 257706363616.dkr.ecr.ap-northeast-2.amazonaws.com/spaceone/image-cleaner:v0.1
             imagePullPolicy: IfNotPresent
             volumeMounts:
             - mountPath: /usr/src/conf
