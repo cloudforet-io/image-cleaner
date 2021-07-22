@@ -101,6 +101,7 @@ def get_old_tag(token, repository, image):
             print(f"old tags : {image}:{result['name']}")
             image_tags.append(result['name'])
 
+    print(f"old tags : {image}:{image_tags}")
     return image_tags
 
 def delete_image(token, repository, image, tag):
