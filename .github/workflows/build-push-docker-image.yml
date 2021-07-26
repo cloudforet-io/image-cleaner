@@ -1,9 +1,11 @@
 name: build-push-docker-image
 
 on:
-  create:
-    tags:
-      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'New image tag `vx.y`'
+        required: true
 
 jobs:
   build_and_deploy:
@@ -11,10 +13,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    
-    - name: Get Tag Version
-      id: tag_version
-      run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
 
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -32,4 +30,4 @@ jobs:
       with:
         context: .
         push: true
-        tags: ${{ secrets.DEV_IMAGE_CLEANER_AWS_ECR_REPO_NAME }}:${{ steps.tag_version.outputs.tag }}
+        tags: ${{ secrets.DEV_IMAGE_CLEANER_AWS_ECR_REPO_NAME }}:${{ github.event.inputs.tag }}
