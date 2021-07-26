@@ -31,7 +31,7 @@ jobs:
       id: build-push-app-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ secrets.DEV_IMAGE_CLEANER_AWS_ECR_REPO_NAME }}
+        ECR_REPOSITORY: 257706363616.dkr.ecr.ap-northeast-2.amazonaws.com/spaceone/image-cleaner
         IMAGE_TAG: ${{ steps.tag_version.outputs.tag }}
       run: |
         echo ${{ secrets.DEV_IMAGE_CLEANER_AWS_ECR_REPO_NAME }}
