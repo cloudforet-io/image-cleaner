@@ -1,9 +1,11 @@
 name: build-push-docker-image
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'New image tag `vx.y`'
+        required: true
 
 jobs:
   build_and_deploy:
@@ -11,28 +13,21 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    
-    - name: Get Tag Version
-      id: tag_version
-      run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
 
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ap-northeast-1
+        aws-access-key-id: ${{ secrets.DEV_IMAGE_CLEANER_AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.DEV_IMAGE_CLEANER_AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-northeast-2
 
     - name: Login to Amazon ECR
       id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
+      run: aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin ${{ secrets.DEV_IMAGE_CLEANER_AWS_ECR_REPO_NAME }}
 
-    - name: Build and Push Image to Amazon ECR
-      id: build-push-app-image
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ secrets.AWS_ECR_REPO_NAME }}
-        IMAGE_TAG: ${{ steps.tag_version.outputs.tag }}
-      run: |
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+    - name: Build and push (ECR)
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        push: true
+        tags: ${{ secrets.DEV_IMAGE_CLEANER_AWS_ECR_REPO_NAME }}:${{ github.event.inputs.tag }}

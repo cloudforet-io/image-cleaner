@@ -49,7 +49,7 @@ SECRET_NAME='image-cleaner-secret-erc'
 ```
 - Run script to Create imagePullSecrets
 ```
-sh ./helper/credential-ecr-sh
+sh ./helper/credential-ecr.sh
 ```
 
 ### 4. create configmap & secret & cronjob
