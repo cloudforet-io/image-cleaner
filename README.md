@@ -3,7 +3,7 @@ Periodically Delete old images in docker hub (Every day)
 
 <img width="1337" alt="스크린샷 2021-07-14 오후 9 24 10" src="https://user-images.githubusercontent.com/19552819/125621539-382e58aa-0c16-4c4a-9e49-01a79b651c48.png">
 
-## How to create CronJob
+## How to create
 
 ### 1. Encoding secret infomation
 - username : docker hub username
@@ -23,9 +23,9 @@ data:
   password: <password> <- here
 ```
 
-### 4. Create imagePullSecrets to Login ECR 
+### 3. Create imagePullSecrets for Login into ECR 
 
-- Edit the ecr token generation script in ./helper/credential-ecr.sh
+- Edit the ecr token generation script (./helper/credential-ecr.sh)
 ```
 # KUBECTL='kubectl --dry-run=client'
 KUBECTL='kubectl'
@@ -40,7 +40,7 @@ SECRET_NAME='image-cleaner-secret-erc'
 sh ./helper/credential-ecr-sh
 ```
 
-### 3. create configmap & secret & cronjob
+### 4. create configmap & secret & cronjob
 - configmap
 ```
 kubectl create configmap image-cleaner-conf --from-file=./conf/
