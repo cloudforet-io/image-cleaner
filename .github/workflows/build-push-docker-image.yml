@@ -25,16 +25,11 @@ jobs:
 
     - name: Login to Amazon ECR
       id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
+      run: aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin ${{ secrets.DEV_IMAGE_CLEANER_AWS_ECR_REPO_NAME }}
 
-    - name: Build and Push Image to Amazon ECR
-      id: build-push-app-image
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: 257706363616.dkr.ecr.ap-northeast-2.amazonaws.com/spaceone/image-cleaner
-        IMAGE_TAG: ${{ steps.tag_version.outputs.tag }}
-      run: |
-        echo ${{ secrets.DEV_IMAGE_CLEANER_AWS_ECR_REPO_NAME }}
-        echo $ECR_REPOSITORY
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+    - name: Build and push (ECR)
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        push: true
+        tags: ${{ secrets.DEV_IMAGE_CLEANER_AWS_ECR_REPO_NAME }}:${{ steps.tag_version.outputs.tag }}
