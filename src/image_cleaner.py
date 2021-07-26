@@ -9,7 +9,7 @@ config = ConfigParser()
 try:
     config.read_file(open('./conf/config.ini'))
 except FileNotFoundError:
-    print('[Error] Config file does not exist')
+    print('[ERROR] Config file does not exist')
     sys.exit(1)
 
 BASE_URL = config['COMMON']['base_url']
@@ -20,7 +20,7 @@ def get_login_info():
     password = os.environ.get('password')
 
     if username is None or password is None:
-        print('Key Error : username or password does not exist in os.env')
+        print('[ERROR] username or password does not exist in os.env')
         sys.exit(1)
 
     return username,password
@@ -35,16 +35,16 @@ def create_authentication_token(username, password):
     try:
         response = requests.post(url, data=payload).json()
     except requests.exceptions.ConnectionError as e:
-        raise Exception(f'Connection Error {e.response}')
+        raise Exception(f'[ERROR] Connection Error {e.response}')
     except requests.exceptions.HTTPError as e:
-        raise Exception(f'HTTP Error {e.response}')
+        raise Exception(f'[ERROR] HTTP Error {e.response}')
     except json.JSONDecodeError as e:
-        raise Exception(f'Json Decode Error {e}')
+        raise Exception(f'[ERROR] Json Decode Error {e}')
 
     if response.get('token'):
         return response['token']
     else:
-        raise Exception(f'response message : {response}')
+        raise Exception(f'[ERROR] Response does not have a key "token" : {response}')
 
 def get_image_name(token, repository):
     url = f'{BASE_URL}/v2/repositories/{repository}/?page_size=100'
@@ -55,16 +55,16 @@ def get_image_name(token, repository):
     try:
         response = requests.get(url,headers=headers).json()
     except requests.exceptions.ConnectionError as e:
-        raise Exception(f'Connection Error {e.response}')
+        raise Exception(f'[ERROR] Connection Error {e.response}')
     except requests.exceptions.HTTPError as e:
-        raise Exception(f'HTTP Error {e.response}')
+        raise Exception(f'[ERROR] HTTP Error {e.response}')
     except json.JSONDecodeError as e:
-        raise Exception(f'Json Decode Error {e}')
+        raise Exception(f'[ERROR] Json Decode Error {e}')
 
     if response.get('results'):
         results = response['results']
     else:
-        raise Exception(f'response message : {response}')
+        raise Exception(f'[ERROR] Response does not have a key "results" : {response}')
 
     image_names = []
     for result in results:
@@ -82,11 +82,11 @@ def get_old_tag(token, repository, image):
     try:
         response = requests.get(url, headers=headers).json()
     except requests.exceptions.ConnectionError as e:
-        raise Exception(f'Connection Error {e.response}')
+        raise Exception(f'[ERROR] Connection Error {e.response}')
     except requests.exceptions.HTTPError as e:
-        raise Exception(f'HTTP Error {e.response}')
+        raise Exception(f'[ERROR] HTTP Error {e.response}')
     except json.JSONDecodeError as e:
-        raise Exception(f'Json Decode Error {e}')
+        raise Exception(f'[ERROR] Json Decode Error {e}')
 
     if response.get('results'):
         results = response['results']
@@ -114,9 +114,9 @@ def delete_image(token, repository, image, tag):
     try:
         response = requests.delete(url,headers=headers)
     except requests.exceptions.ConnectionError as e:
-        raise Exception(f'Connection Error {e.response}')
+        raise Exception(f'[ERROR] Connection Error {e.response}')
     except requests.exceptions.HTTPError as e:
-        raise Exception(f'HTTP Error {e.response}')
+        raise Exception(f'[ERROR] HTTP Error {e.response}')
 
     if response.status_code == 204:
         print(f'[{image}:{tag}] Successfully Deleted {response.status_code}')
