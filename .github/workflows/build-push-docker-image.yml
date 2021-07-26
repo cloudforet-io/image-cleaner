@@ -20,7 +20,7 @@ jobs:
       uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ secrets.DEV_IMAGE_CLEANER_AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.DEV_IMAGE_CLEANER_AWS_ECR_REPO_NAME }}
+        aws-secret-access-key: ${{ secrets.DEV_IMAGE_CLEANER_AWS_SECRET_ACCESS_KEY }}
         aws-region: ap-northeast-2
 
     - name: Login to Amazon ECR
@@ -31,7 +31,7 @@ jobs:
       id: build-push-app-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ secrets.DEV_IMAGE_CLEANER_AWS_SECRET_ACCESS_KEY }}
+        ECR_REPOSITORY: ${{ secrets.DEV_IMAGE_CLEANER_AWS_ECR_REPO_NAME }}
         IMAGE_TAG: ${{ steps.tag_version.outputs.tag }}
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
