@@ -3,6 +3,18 @@ Periodically Delete old images in docker hub (Every day)
 
 <img width="1337" alt="스크린샷 2021-07-14 오후 9 24 10" src="https://user-images.githubusercontent.com/19552819/125621539-382e58aa-0c16-4c4a-9e49-01a79b651c48.png">
 
+## prerequisite
+Add additional aws credentials for ECR repo
+```
+# vim $HOME/.aws/credentials
+
+...
+[image_cleaner]
+aws_access_key_id = <ECR repo user aws_access_key_id>
+aws_secret_access_key = <ECR repo user aws_secret_access_key>
+region = ap-northeast-2
+```
+
 ## How to create
 
 ### 1. Encoding secret infomation

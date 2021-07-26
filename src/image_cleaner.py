@@ -98,10 +98,11 @@ def get_old_tag(token, repository, image):
         last_updated_str = result['tag_last_pushed']
         last_updated = datetime.strptime(last_updated_str, '%Y-%m-%dT%H:%M:%S.%f%z')
         if DATE_TWO_MONTHS_AGO > last_updated:
-            print(f"old tags : {image}:{result['name']}")
             image_tags.append(result['name'])
+        
+    if image_tags:
+        print(f"old tags : {image}:{image_tags}")
 
-    print(f"old tags : {image}:{image_tags}")
     return image_tags
 
 def delete_image(token, repository, image, tag):

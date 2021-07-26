@@ -11,7 +11,7 @@ if [ "$EXISTS" = "$SECRET_NAME" ]; then
   $KUBECTL delete secrets "$SECRET_NAME"
 fi
 
-PASS=$(aws ecr get-login-password --region $AWS_ECR_REPOSITORY_REGION)
+PASS=$(aws ecr get-login-password --region $AWS_ECR_REPOSITORY_REGION --profile image_cleaner)
 $KUBECTL create secret docker-registry $SECRET_NAME \
     --docker-server=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_ECR_REPOSITORY_REGION.amazonaws.com \
     --docker-username=AWS \
