@@ -21,7 +21,7 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.DEV_IMAGE_CLEANER_AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.DEV_IMAGE_CLEANER_AWS_ECR_REPO_NAME }}
-        aws-region: ap-northeast-1
+        aws-region: ap-northeast-2
 
     - name: Login to Amazon ECR
       id: login-ecr
