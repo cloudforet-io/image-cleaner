@@ -13,6 +13,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    
+    - name: Create a GitHub release 
+      run: |
+        git config user.name github-actions[bot]
+        git config user.email github-actions@github.com
+        git tag ${{ github.event.inputs.tag }} 
+        git push origin "${{ github.event.inputs.tag }}"
 
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
