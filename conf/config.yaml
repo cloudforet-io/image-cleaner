@@ -1,0 +1,38 @@
+repositories:
+  - name: ECR - exam1
+    repository_type: ECR
+    options:
+      url: https://123123123123.dkr.ecr.ap-northeast-1.amazonaws.com
+      organization: org_name
+      images:
+      - name: "*|image*|image-*|*image"
+        policy:
+          version: <= 0.1
+          age: <= 10d
+      credentials:
+        username: username
+        password: password
+  - name: Docker Hub - examp2
+    repository_type: DOCKER_HUB
+    options:
+      url: https://hub.docker.com
+      organization: org_name
+      images:
+      - name: "*|image*|image-*|*image"
+        policy:
+          age: <= 60d
+      credentials:
+        username: username
+        password: password
+  - name: Docker Hub - examp3
+    repository_type: DOCKER_HUB
+    options:
+      url: https://hub.docker.com
+      organization: org_name
+      images:
+        - name: "*|image*|image-*|*image"
+          policy:
+            version: <= 0.4
+      credentials:
+        username: username
+        password: password
