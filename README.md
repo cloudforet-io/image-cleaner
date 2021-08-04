@@ -1,48 +1,62 @@
 # image-cleaner
 Periodically Delete old images in docker hub (Every day)
 
-<img width="1337" alt="스크린샷 2021-07-14 오후 9 24 10" src="https://user-images.githubusercontent.com/19552819/125621539-382e58aa-0c16-4c4a-9e49-01a79b651c48.png">
+![스크린샷 2021-08-04 오후 5 40 54](https://user-images.githubusercontent.com/19552819/128150603-50f4c0ff-84f8-4a79-8b72-50bb8139571a.png)
+
 
 ## prerequisite
-Add additional aws credentials for ECR repo
+Add aws credentials profile for ECR repo
 ```
 # vim $HOME/.aws/credentials
 
 ...
 [image_cleaner]
-aws_access_key_id = <ECR repo user aws_access_key_id>
-aws_secret_access_key = <ECR repo user aws_secret_access_key>
-region = ap-northeast-2
+aws_access_key_id = <ECR repo user's aws_access_key_id>
+aws_secret_access_key = <ECR repo user's aws_secret_access_key>
+region = region
 ```
 
 ## How to create
 
-### 1. Encoding secret infomation
-- username : docker hub username
-- password : docker hub password
+### 1. Edit Configuration (conf/config.yaml)
+```yaml
+repositories:
+  - name: ECR - exam1
+    repository_type: ECR
+    options:
+      url: https://123123123123.dkr.ecr.ap-northeast-1.amazonaws.com
+      organization: org_name
+      images:
+      - name: "*|image*|image-*|*image"
+        policy:
+          version: <= 0.1
+          age: <= 10d (*1)
+      credentials:
+        username: username
+        password: password
+  - name: Docker Hub - examp2
+    repository_type: DOCKER_HUB
+    options:
+      url: https://hub.docker.com
+      organization: org_name
+      images:
+      - name: "*|image*|image-*|*image"
+        policy:
+          age: <= 60d
+      credentials:
+        username: username
+        password: password
 ```
-echo -n <username> | base64 
-echo -n <password> | base64
-```
-### 2. Edit image_cleaner_secret.yaml
-```
-apiVersion: v1
-kind: Secret
-metadata:
-  name: image-cleaner-secret
-data:
-  username: <username> <- here
-  password: <password> <- here
-```
+*1) d(day), h(hour), m(minute), s(second)
 
-### 3. Create imagePullSecrets for Login into ECR 
+### 2. Create imagePullSecrets to Login into ECR repository(python scripts)
 
-- Edit the ecr token generation script (./helper/credential-ecr.sh)
+- Edit the ecr token generation script (helper/credential-ecr.sh)
 ```
 # KUBECTL='kubectl --dry-run=client'
 KUBECTL='kubectl'
 
-AWS_ACCOUNT_ID='<YOUR AWS ACCOUNT ID>'
+AWS_ACCOUNT_ID='<AWS ACCOUNT ID>'
 AWS_DEFAULT_REGION='<ECR REPOSITORY REGION>'
 SECRET_NAME='image-cleaner-secret-erc'
 ...
@@ -52,15 +66,12 @@ SECRET_NAME='image-cleaner-secret-erc'
 sh ./helper/credential-ecr.sh
 ```
 
-### 4. create configmap & secret & cronjob
+### 3. create configmap & secret & cronjob
 - configmap
 ```
 kubectl create configmap image-cleaner-conf --from-file=./conf/
 ```
-- secret
-```
-kubectl create -f image_cleaner_secret.yaml
-```
+
 - cronjob
 ```
 kubectl create -f image_cleaner_cronjob.yaml
@@ -71,10 +82,6 @@ To Update object, You can use the command below.
 - configmap
 ```
 kubectl create configmap image-cleaner-conf --from-file=./conf/ -o yaml --dry-run=client | kubectl replace -f -
-```
-- secret
-```
-kubectl replace -f image_cleaner_secret.yaml
 ```
 - cronjob
 ```

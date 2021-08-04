@@ -1,1 +1,4 @@
-requests
+requests==2.26.0
+pyyaml==5.4.1
+docker_registry_client==0.5.2
+boto3==1.18.9
