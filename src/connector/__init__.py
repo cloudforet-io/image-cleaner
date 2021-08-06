@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from abc import ABC, abstractmethod
 import fnmatch
 import operator
+import re
 
 class BaseConnetor(ABC):
 
@@ -38,9 +39,17 @@ class BaseConnetor(ABC):
 
     def _get_image_policy(self, image_name, image_rules):
         for rule in image_rules:
-            if fnmatch.fnmatch(image_name,rule['name']):
-                return rule['policy']
-        
+            if negative_match := re.match('^!',rule['name']):
+                negative_match_pattern = negative_match.string[1:]
+                if negative_match_pattern not in image_name:
+                    return rule['policy']
+            else:
+                try:
+                    if fnmatch.fnmatch(image_name,rule['name']):
+                        return rule['policy']
+                except Exception as e:
+                    raise Exception(e)
+                
         return None
 
     def _get_tags_by_policy(self, image_policy, tags):

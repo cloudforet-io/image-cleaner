@@ -27,10 +27,10 @@ repositories:
       url: https://123123123123.dkr.ecr.ap-northeast-1.amazonaws.com
       organization: org_name
       images:
-      - name: "*|image*|image-*|*image"
+      - name: "*|image*|image-*|*image"(*1)
         policy:
           version: <= 0.1
-          age: <= 10d (*1)
+          age: <= 10d (*2)
       credentials:
         username: username
         password: password
@@ -46,8 +46,26 @@ repositories:
       credentials:
         username: username
         password: password
+  - name: Docker Hub - examp3
+    repository_type: DOCKER_HUB
+    options:
+      url: https://hub.docker.com
+      organization: org_name
+      images:
+      - name: "!negative"
+        policy:
+          age: <= 60h
+      credentials:
+        username: username
+        password: password
 ```
-*1) d(day), h(hour), m(minute), s(second)
+*1) 
+|Pattern|Meaning|
+|---|---|
+|`*`|matches everything|
+|`!str`|matches any character not including str|
+
+*2) d(day), h(hour), m(minute), s(second)
 
 ### 2. Create imagePullSecrets to Login into ECR repository(python scripts)
 
