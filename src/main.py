@@ -20,7 +20,6 @@ def main():
             connector = DockerHubConnector(repository_statement)
         elif repository_statement['repository_type'] == "ECR":
             connector = EcrConnector(repository_statement)
-            pass
         else:
             print('Invalid Repository type. (DOCKER_HUB|ECR)')
             sys.exit(1)

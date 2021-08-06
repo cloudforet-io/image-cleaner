@@ -58,7 +58,7 @@ KUBECTL='kubectl'
 
 AWS_ACCOUNT_ID='<AWS ACCOUNT ID>'
 AWS_DEFAULT_REGION='<ECR REPOSITORY REGION>'
-SECRET_NAME='image-cleaner-secret-erc'
+SECRET_NAME='image-cleaner-secret-ecr'
 ...
 ```
 - Run script to Create imagePullSecrets
