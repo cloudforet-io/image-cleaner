@@ -29,6 +29,7 @@ class BaseConnetor(ABC):
 
     def _filter(self, image_name, tags):
         image_rules = self.config['options']['images']
+
         image_policy = self._get_image_policy(image_name, image_rules)
         if image_policy is None:
             return []
@@ -39,17 +40,14 @@ class BaseConnetor(ABC):
 
     def _get_image_policy(self, image_name, image_rules):
         for rule in image_rules:
-            if negative_match := re.match('^!',rule['name']):
-                negative_match_pattern = negative_match.string[1:]
+            if is_negative_match := re.match('^!',rule['name']):
+                negative_match_pattern = is_negative_match.string[1:]
                 if negative_match_pattern not in image_name:
                     return rule['policy']
             else:
-                try:
-                    if fnmatch.fnmatch(image_name,rule['name']):
-                        return rule['policy']
-                except Exception as e:
-                    raise Exception(e)
-                
+                if fnmatch.fnmatch(image_name,rule['name']):
+                    return rule['policy']
+
         return None
 
     def _get_tags_by_policy(self, image_policy, tags):
@@ -72,7 +70,7 @@ class BaseConnetor(ABC):
                 continue
 
             if version_policy:
-                if len(version_policy.split(" ")) <= 1:
+                if not re.fullmatch('^(>|<)=?\s[0-9].+',version_policy):
                     raise Exception("Invalid version policy format")
 
                 version_policy_operator = version_policy.split(" ")[0]
@@ -84,7 +82,7 @@ class BaseConnetor(ABC):
                 flags.append(version_filtering_flag)
 
             if age_policy:
-                if len(age_policy.split(" ")) <= 1:
+                if not re.fullmatch('^(>|<)=?\s\d+(d|h|m|s)',age_policy):
                     raise Exception("Invalid age policy format")
 
                 age_policy_operator = age_policy.split(" ")[0]
@@ -92,11 +90,11 @@ class BaseConnetor(ABC):
                 age_policy_date_variable = age_policy_date[-1]
                 age_policy_date_coefficient = int(age_policy_date[:-1])
 
-                if age_policy_date_variable == 'd': # day
+                if age_policy_date_variable == 'd':     # day
                     coefficient = age_policy_date_coefficient * 1440
-                elif  age_policy_date_variable == 'h': # hour
+                elif  age_policy_date_variable == 'h':  # hour
                     coefficient = age_policy_date_coefficient * 60
-                elif age_policy_date_variable == 's': # second
+                elif age_policy_date_variable == 's':   # second
                     coefficient = age_policy_date_coefficient / 60
                 else:
                     raise Exception("Unsupported date format")
