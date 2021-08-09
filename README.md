@@ -5,7 +5,7 @@ Periodically Delete old images in docker hub (Every day)
 
 
 ## prerequisite
-Add aws credentials profile for ECR repo
+Add aws credentials profile for ECR repository(python scripts)
 ```
 # vim $HOME/.aws/credentials
 
@@ -32,8 +32,8 @@ repositories:
           version: <= 0.1
           age: <= 10d (*2)
       credentials:
-        username: username
-        password: password
+        access_key_id: access_key_id
+        secret_access_key: secret_access_key
   - name: Docker Hub - examp2
     repository_type: DOCKER_HUB
     options:

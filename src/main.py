@@ -12,7 +12,7 @@ def main():
         print(e)
         sys.exit(1)
     except yaml.YAMLError as e:
-        print(f"Invalid yaml format {e}")
+        print(f"Invalid yaml format! {e}")
         sys.exit(1)
 
     for repository_statement in repository_statements:

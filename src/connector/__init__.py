@@ -1,15 +1,16 @@
-import sys
 from datetime import datetime, timedelta, timezone
 from abc import ABC, abstractmethod
 import fnmatch
 import operator
 import re
+import sys
 
 class BaseConnetor(ABC):
 
     def __init__(self, config):
         self.config = config
         self.current_time = datetime.now(tz=timezone.utc)
+        self._check_credential_type()
 
     @abstractmethod
     def login(self):
@@ -26,6 +27,20 @@ class BaseConnetor(ABC):
     @abstractmethod
     def delete(self, image, tag):
         pass
+
+    def _check_credential_type(self):
+        credentials = list(self.config['options']['credentials'].keys())
+        if self.config['repository_type'] == "ECR":
+            if "username" in credentials or "password" in credentials:
+                print('ECR type requires access_key_id and secret_access_key')
+                print(f'Curruent credential is {credentials}')
+                sys.exit(1)
+
+        if self.config['repository_type'] == "DOCKER_HUB":
+            if "access_key_id" in credentials or "secret_access_key" in credentials:
+                print('DOCKER_HUB type requires username and password')
+                print(f'Curruent credential is {credentials}')
+                sys.exit(1)
 
     def _filter(self, image_name, tags):
         image_rules = self.config['options']['images']
@@ -70,7 +85,7 @@ class BaseConnetor(ABC):
                 continue
 
             if version_policy:
-                if not re.fullmatch('^(>|<)=?\s[0-9].+',version_policy):
+                if not re.fullmatch('^(=|>|<)=?\s[\d.]+',version_policy):
                     raise Exception("Invalid version policy format")
 
                 version_policy_operator = version_policy.split(" ")[0]
@@ -82,7 +97,7 @@ class BaseConnetor(ABC):
                 flags.append(version_filtering_flag)
 
             if age_policy:
-                if not re.fullmatch('^(>|<)=?\s\d+(d|h|m|s)',age_policy):
+                if not re.fullmatch('^(=|>|<)=?\s\d+(d|h|m|s)',age_policy):
                     raise Exception("Invalid age policy format")
 
                 age_policy_operator = age_policy.split(" ")[0]

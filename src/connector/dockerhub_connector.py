@@ -2,7 +2,6 @@ from . import BaseConnetor
 import requests
 import json
 
-
 class DockerHubConnector(BaseConnetor):
 
     def __init__(self, config):

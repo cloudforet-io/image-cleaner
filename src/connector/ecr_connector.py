@@ -11,8 +11,8 @@ class EcrConnector(BaseConnetor):
         self.login()
 
     def login(self):
-        self.access_key_id = self.config['options']['credentials']['username']
-        self.secret_access_key = self.config['options']['credentials']['password']
+        self.access_key_id = self.config['options']['credentials']['access_key_id']
+        self.secret_access_key = self.config['options']['credentials']['secret_access_key']
 
         try:
             sess = boto3.Session(
