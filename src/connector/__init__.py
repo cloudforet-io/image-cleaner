@@ -53,6 +53,7 @@ class BaseConnetor(ABC):
 
         return tags_by_policy
 
+    # TODO: fnmatch -> python gitignore parser
     def _get_image_policy(self, image_name, image_rules):
         for rule in image_rules:
             if is_negative_match := re.match('^!',rule['name']):
@@ -84,6 +85,7 @@ class BaseConnetor(ABC):
             if tag_version == "latest":
                 continue
 
+            # TODO: python version parser
             if version_policy:
                 if not re.fullmatch('^(=|>|<)=?\s[\d.]+',version_policy):
                     raise Exception("Invalid version policy format")
@@ -96,6 +98,7 @@ class BaseConnetor(ABC):
                 version_filtering_flag = ops[version_policy_operator](tag_version, version_policy_number)
                 flags.append(version_filtering_flag)
 
+            # TODO: python dateparser
             if age_policy:
                 if not re.fullmatch('^(=|>|<)=?\s\d+(d|h|m|s)',age_policy):
                     raise Exception("Invalid age policy format")
