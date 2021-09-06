@@ -1,4 +1,5 @@
 from . import BaseConnetor
+from datetime import datetime
 import requests
 import json
 import math
@@ -80,7 +81,7 @@ class DockerHubConnector(BaseConnetor):
             for result in response['results']:
                 tag = {}
                 tag['name'] = result['name']
-                tag['tag_last_pushed'] = result['tag_last_pushed']
+                tag['tag_last_pushed'] = datetime.strptime(result['tag_last_pushed'], '%Y-%m-%dT%H:%M:%S.%f%z')
                 tags.append(tag)
         
         return tags

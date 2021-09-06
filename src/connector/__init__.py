@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from abc import ABC, abstractmethod
+from packaging.version import Version, InvalidVersion
 import fnmatch
 import operator
 import re
@@ -44,27 +45,27 @@ class BaseConnetor(ABC):
 
     def _filter(self, image_name, tags):
         image_rules = self.config['options']['images']
-
         image_policy = self._get_image_policy(image_name, image_rules)
         if image_policy is None:
             return []
 
-        tags_by_policy = self._get_tags_by_policy(image_policy,tags)
+        tags_by_policy = self._get_tags_by_policy(image_policy, tags)
 
         return tags_by_policy
 
-    # TODO: fnmatch -> python gitignore parser
     def _get_image_policy(self, image_name, image_rules):
         for rule in image_rules:
-            if is_negative_match := re.match('^!',rule['name']):
-                negative_match_pattern = is_negative_match.string[1:]
-                if negative_match_pattern not in image_name:
-                    return rule['policy']
-            else:
-                if fnmatch.fnmatch(image_name,rule['name']):
-                    return rule['policy']
+            if self._check_image_policy(image_name, rule):
+                return rule['policy']
 
         return None
+
+    def _check_image_policy(self, image_name, rule):
+        is_negative_match = False
+        if rule['name'][:1] == "!":
+            is_negative_match = True
+
+        return fnmatch.fnmatch(image_name, rule['name'][1:]) == (not is_negative_match)
 
     def _get_tags_by_policy(self, image_policy, tags):
         age_policy = image_policy.get('age')
@@ -81,50 +82,67 @@ class BaseConnetor(ABC):
         for tag in tags:
             tag_version = tag.get('name')
             tag_last_pushed = tag.get('tag_last_pushed')
-            flags = []
             if tag_version == "latest":
                 continue
 
-            # TODO: python version parser
-            if version_policy:
-                if not re.fullmatch('^(=|>|<)=?\s[\d.]+',version_policy):
-                    raise Exception("Invalid version policy format")
-
-                version_policy_operator = version_policy.split(" ")[0]
-                version_policy_number = version_policy.split(" ")[1]
-                if not ops.get(version_policy_operator):
-                    raise Exception("Unsupported operator")
-
-                version_filtering_flag = ops[version_policy_operator](tag_version, version_policy_number)
-                flags.append(version_filtering_flag)
-
-            # TODO: python dateparser
-            if age_policy:
-                if not re.fullmatch('^(=|>|<)=?\s\d+(d|h|m|s)',age_policy):
-                    raise Exception("Invalid age policy format")
-
-                age_policy_operator = age_policy.split(" ")[0]
-                age_policy_date = age_policy.split(" ")[1]
-                age_policy_date_variable = age_policy_date[-1]
-                age_policy_date_coefficient = int(age_policy_date[:-1])
-
-                if age_policy_date_variable == 'd':     # day
-                    coefficient = age_policy_date_coefficient * 1440
-                elif  age_policy_date_variable == 'h':  # hour
-                    coefficient = age_policy_date_coefficient * 60
-                elif age_policy_date_variable == 's':   # second
-                    coefficient = age_policy_date_coefficient / 60
-                else:
-                    raise Exception("Unsupported date format")
-
-                policy_date = datetime.now(tz=timezone.utc) - timedelta(minutes=coefficient)
-                if isinstance(tag_last_pushed, str):
-                    tag_last_pushed = datetime.strptime(tag_last_pushed, '%Y-%m-%dT%H:%M:%S.%f%z')
-                age_filtering_flag = ops[age_policy_operator](tag_last_pushed,policy_date)
-                flags.append(age_filtering_flag)
-
-            if False not in flags:
+            if self._check_version_policy(version_policy, tag_version, ops) and self._check_age_policy(age_policy, tag_last_pushed, ops):
                 result.append(tag_version)
 
         return result
 
+    def _check_version_policy(self, version_policy, tag_version, ops):
+        if not version_policy:
+            return True
+
+        p = r'(?P<operator>^(=|>|<|>=|<=))' \
+            r' (?P<number>\d+(?:\.\d+){1,2})'
+        rule = re.compile(p)
+        policy = rule.match(version_policy)
+
+        if policy:
+            version_policy_operator = policy['operator']
+            version_policy_number = policy['number']
+        else:
+            raise Exception("Invalid version policy format")
+
+        p = '\d+(?:\.\d+){1,2}'
+        rule = re.compile(p)
+        split_tag_version = rule.match(tag_version)
+
+        if split_tag_version:
+            tag_version = split_tag_version.group()
+        else:
+            return False
+
+        tag_version = Version(tag_version)
+        version_policy_number = Version(version_policy_number)
+
+        return ops[version_policy_operator](tag_version, version_policy_number)
+
+    def _check_age_policy(self, age_policy, tag_last_pushed, ops):
+        if not age_policy:
+            return True
+
+        p = r'(?P<operator>(=|>|<|>=|<=))' \
+            r' (?P<date_number>\d+)' \
+            r'(?P<date_unit>(d|h|m|s)+)'
+        rule = re.compile(p)
+        policy = rule.match(age_policy)
+
+        if policy:
+            age_policy_operator = policy['operator']
+            age_policy_date_unit = policy['date_unit']
+            age_policy_date_number = int(policy['date_number'])
+        else:
+            raise Exception("Invalid age policy format")
+
+        if age_policy_date_unit == 'd':  # day
+            age_policy_date_number = age_policy_date_number * 1440
+        elif age_policy_date_unit == 'h':  # hour
+            age_policy_date_number = age_policy_date_number * 60
+        elif age_policy_date_unit == 's':  # second
+            age_policy_date_number = age_policy_date_number / 60
+
+        policy_date = datetime.now(tz=timezone.utc) - timedelta(minutes=age_policy_date_number)
+
+        return ops[age_policy_operator](tag_last_pushed, policy_date)

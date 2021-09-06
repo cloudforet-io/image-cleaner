@@ -27,7 +27,7 @@ repositories:
       url: https://123123123123.dkr.ecr.ap-northeast-1.amazonaws.com
       organization: org_name
       images:
-      - name: "*|image*|image-*|*image"(*1)
+      - name: "*|image*|image-*|*image|!negative-*"(*1)
         policy:
           version: <= 0.1
           age: <= 10d (*2)
@@ -40,7 +40,7 @@ repositories:
       url: https://hub.docker.com
       organization: org_name
       images:
-      - name: "*|image*|image-*|*image"
+      - name: "*|image*|image-*|*image|!negative-*"
         policy:
           age: <= 60d
       credentials:
@@ -52,7 +52,7 @@ repositories:
       url: https://hub.docker.com
       organization: org_name
       images:
-      - name: "!negative"
+      - name: "!negative-*"
         policy:
           age: <= 60h
       credentials:
