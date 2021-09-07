@@ -64,8 +64,9 @@ class BaseConnetor(ABC):
         is_negative_match = False
         if rule['name'][:1] == "!":
             is_negative_match = True
+            rule['name'] = rule['name'][1:]
 
-        return fnmatch.fnmatch(image_name, rule['name'][1:]) == (not is_negative_match)
+        return fnmatch.fnmatch(image_name, rule['name']) == (not is_negative_match)
 
     def _get_tags_by_policy(self, image_policy, tags):
         age_policy = image_policy.get('age')
